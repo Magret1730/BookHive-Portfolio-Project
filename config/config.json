@@ -1,0 +1,26 @@
+{
+  "development": {
+    "username": "magret",
+    "password": "magret",
+    "database": "bookhive",
+    "host": "localhost",
+    "port": 5432,
+    "dialect": "postgres"
+  },
+  "test": {
+    "username": "magret",
+    "password": "magret",
+    "database": "bookhive",
+    "host": "localhost",
+    "port": 5432,
+    "dialect": "postgres"
+  },
+  "production": {
+    "username": "magret",
+    "password": "magret",
+    "database": "bookhive",
+    "host": "localhost",
+    "port": 5432,
+    "dialect": "postgres"
+  }
+}
