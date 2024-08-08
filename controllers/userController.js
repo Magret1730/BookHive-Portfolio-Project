@@ -1,6 +1,7 @@
 import User from '../models/userModel.js';
 import bcrypt from 'bcryptjs';
 import jsonwebtoken from 'jsonwebtoken';
+// import redisClient from '../utils/redis.js';
 
 export const registerUser = async (req, res) => {
     try {
@@ -105,6 +106,9 @@ export const loginUser = async (req, res) => {
             existingUser.token = token;
             await existingUser.save();
 
+            // Store the token in Redis
+            // await redisClient.set(existingUser.id.toString(), token, 7 * 24 * 60 * 60);
+
             existingUser.password = undefined;
 
             const options = {
@@ -113,7 +117,7 @@ export const loginUser = async (req, res) => {
             };
             res.cookie('token', token, {
                 httpOnly: true,
-                secure: process.env.NODE_ENV === 'development',
+                secure: process.env.NODE_ENV === 'production',
                 expires: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
             });
             res.status(200).cookie("token", token, options).json({
@@ -129,6 +133,9 @@ export const loginUser = async (req, res) => {
 
 export const logoutUser = async (req, res) => {
     try {
+        // const userId = req.user.id; // Get user's id if authenticated
+        // await redisClient.del(userId.toString()); // Delete the user's session from Redis
+
         res.clearCookie('token', {
             httpOnly: true,
             sameSite: 'strict'

@@ -1,9 +1,10 @@
-import redis from 'redis';
+// import redis from 'redis';
+import { createClient } from '@redis/client';
 import { promisify } from 'util';
 
 class RedisClient {
   constructor() {
-    this.client = redis.createClient();
+    this.client = createClient();
 
     this.client.on('error', (err) => {
       console.error(`Redis client not connected to the server: ${err.message}`);
@@ -14,14 +15,28 @@ class RedisClient {
     });
 
     // Promisify Redis client methods
+    this.pingAsync = promisify(this.client.ping).bind(this.client);
     this.getAsync = promisify(this.client.get).bind(this.client);
     this.setAsync = promisify(this.client.set).bind(this.client);
     this.delAsync = promisify(this.client.del).bind(this.client);
-    // this.pingAsync = promisify(this.client.ping).bind(this.client);
   }
 
-  isAlive() {
-    return this.client.connected;
+  // isAlive() {
+  //   return this.client.connected;
+  // }
+
+  // Check if the Redis client is connected
+  async isAlive() {
+    try {
+      console.log('good ');
+      const response = await this.pingAsync();
+      console.log('Redis ping response:', response);
+      // return response === 'PONG';
+      // return true;
+    } catch (err) {
+      console.error('Redis client ping failed:', err.message);
+      return false;
+    }
   }
 
   async get(key) {
