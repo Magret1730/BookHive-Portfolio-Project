@@ -1,7 +1,16 @@
 import User from '../models/userModel.js';
 import bcrypt from 'bcryptjs';
 import jsonwebtoken from 'jsonwebtoken';
-// import redisClient from '../utils/redis.js';
+import nodemailer from 'nodemailer';
+import redisClient from '../utils/redis.js';
+
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.GMAIL_USER,
+    pass: process.env.GMAIL_PASSWORD,
+  },
+});
 
 export const registerUser = async (req, res) => {
     try {
@@ -39,7 +48,7 @@ export const registerUser = async (req, res) => {
             return res.status(400).send('Password should be at least 4 characters long');
         }
 
-        const encyptedPwd = await bcrypt.hash(password, 8);
+        const encyptedPwd = await bcrypt.hash(password, 10);
         if (!encyptedPwd) {
             return res.status(500).send('Could not encrypt password');
         }
@@ -61,16 +70,14 @@ export const registerUser = async (req, res) => {
         newUser.token = token;
         await newUser.save();
 
+        // Remove the password field from the response
         newUser.password = undefined;
 
         // when a new user registers, they will automatically receive a token in their cookies,
         // allowing them to be authenticated without needing to log in immediately afterward.
-        // res.cookie('token', token, {
-        //     httpOnly: true, secure: process.env.NODE_ENV === 'production'
-        // });
         res.cookie('token', token, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'development',
+            secure: process.env.NODE_ENV === 'production',
             expires: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
         });
 
@@ -106,8 +113,12 @@ export const loginUser = async (req, res) => {
             existingUser.token = token;
             await existingUser.save();
 
+            // console.log('Before Redis');
+
             // Store the token in Redis
-            // await redisClient.set(existingUser.id.toString(), token, 7 * 24 * 60 * 60);
+            await redisClient.set(existingUser.id.toString(), token, 7 * 24 * 60 * 60);
+
+            // console.log('After Redis');
 
             existingUser.password = undefined;
 
@@ -133,8 +144,8 @@ export const loginUser = async (req, res) => {
 
 export const logoutUser = async (req, res) => {
     try {
-        // const userId = req.user.id; // Get user's id if authenticated
-        // await redisClient.del(userId.toString()); // Delete the user's session from Redis
+        const userId = req.user.id; // Get user's id if authenticated
+        await redisClient.del(userId.toString()); // Delete the user's session from Redis
 
         res.clearCookie('token', {
             httpOnly: true,
@@ -156,5 +167,89 @@ export const allUsers = async (req, res) => {
         res.status(200).json(users);
     } catch (error) {
         res.status(500).json({ error: error.message });
+    }
+};
+
+export const forgotPassword = async (req, res) => {
+    const { email } = req.body;
+    try {
+        if (!(email)) {
+            return res.status(400).json({ error: 'Please put in your email' });
+        };
+
+        const user = await User.findOne({ where: { email } });
+        if (!user) {
+            return res.status(400).json({ error: 'User with this email does not exist' });
+        }
+
+        const token = jsonwebtoken.sign(
+            { id: user.id },
+            process.env.RESET_PASSWORD_KEY,
+            { expiresIn: '20m' }
+        );
+
+        const mailOptions = {
+            from: process.env.GMAIL_USER,
+            to: email,
+            subject: 'BookHive Password Reset',
+            html: `
+                <h2>Click the following link to reset your password:</h2>
+                <h2>The link expires in 20 minutes</h2>
+                <p>http://localhost:${process.env.PORT}/resetPassword/${token}</p>
+            `,
+        };
+
+        // Update user's resetLink
+        await user.update({ resetLink: token });
+
+        transporter.sendMail(mailOptions, (error, info) => {
+            if (error) {
+                return res.status(500).json({ error: 'Failed to send email' });
+            }
+            return res.json({ message: 'Email has been sent, kindly follow the instructions' });
+        });
+    } catch (error) {
+        console.error('Error in forgotPassword:', error.message);
+        return res.status(500).json({ error: error.message });
+    }
+};
+
+export const resetPassword = async (req, res) => {
+    const { resetLink, newPassword } = req.body;
+    if (!resetLink || !newPassword) {
+        return res.status(400).json({ error: 'Reset link and new password are required.' });
+    }
+    try {
+        const decodedData = jsonwebtoken.verify(resetLink, process.env.RESET_PASSWORD_KEY);
+
+        const user = await User.findOne({ where: { resetLink } });
+        if (!user) {
+            return res.status(401).json({ error: 'User with this token does not exist' });
+        }
+
+        // Password validation (minimum 4 characters, optionally add more checks)
+        if (newPassword.length < 4) {
+            return res.status(400).send('Password should be at least 4 characters long');
+        }
+
+        // Encrypt the new password
+        const encyptedPwd = await bcrypt.hash(newPassword, 10);
+        if (!encyptedPwd) {
+            return res.status(500).send('Could not encrypt password');
+        }
+
+        // Update user password and clear reset link
+        user.password = encyptedPwd;
+        user.resetLink = '';
+
+        // save user new informations
+        await user.save();
+
+        // Remove the password field from the response
+        user.password = undefined;
+
+        return res.status(200).json({ message: 'Your password has been changed. Please log in with your new password.' });
+    } catch (error) {
+        res.status(401).json({ error: 'Incorrect or expired token. Please request a new password reset link by entering your email to ge another link in your email address.' });
     }
 };
