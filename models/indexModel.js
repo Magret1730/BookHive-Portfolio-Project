@@ -1,12 +1,14 @@
 // File to handle model initialization and synchronization:
 
 import sequelize from '../utils/dbConfig.js'; // Import the sequelize instance
-import User from './userModel.js'; // Import the User model
+import User from './userModel.js';
+import Books from './bookModel.js';
 
 const db = {};
 
 // Initialize the models
 db.User = User;
+db.Books = Books;
 
 // Synchronize models
 const syncDb = async () => {
