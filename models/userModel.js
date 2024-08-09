@@ -2,6 +2,8 @@
 
 import { DataTypes } from 'sequelize';
 import sequelize from '../utils/dbConfig.js';
+import { Books } from './bookModel.js';
+import { BorrowedBooks } from './borrowedBook.js';
 
 const User = sequelize.define('User', {
   id: {
@@ -41,6 +43,24 @@ const User = sequelize.define('User', {
   }
 }, {
   timestamps: true, // This enables automatic createdAt and updatedAt
+  indexes: [
+    {
+      unique: true,
+      fields: ['email'],
+    },
+    {
+      unique: false,
+      fields: ['token'],
+    },
+    {
+      unique: false,
+      fields: ['isAdmin'],
+    },
+  ],
 });
+
+// Association
+User.belongsToMany(Books, { through: BorrowedBooks });
+Books.belongsToMany(User, { through: BorrowedBooks });
 
 export default User;
