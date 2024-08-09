@@ -1,5 +1,4 @@
 // Configures the db
-
 import { Sequelize } from 'sequelize';
 import dotenv from 'dotenv';
 

@@ -34,6 +34,10 @@ const User = sequelize.define('User', {
   isAdmin: {
     type: DataTypes.BOOLEAN,
     allowNull: false
+  },
+  resetLink: {
+    type: DataTypes.STRING,
+    defaultValue: ''
   }
 }, {
   timestamps: true, // This enables automatic createdAt and updatedAt
