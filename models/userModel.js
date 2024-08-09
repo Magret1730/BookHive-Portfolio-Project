@@ -41,6 +41,20 @@ const User = sequelize.define('User', {
   }
 }, {
   timestamps: true, // This enables automatic createdAt and updatedAt
+  indexes: [
+    {
+      unique: true,
+      fields: ['email'],
+    },
+    {
+      unique: false,
+      fields: ['token'],
+    },
+    {
+      unique: false,
+      fields: ['isAdmin'],
+    },
+  ],
 });
 
 export default User;
