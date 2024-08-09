@@ -1,9 +1,9 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../utils/dbConfig.js';
-import { User } from './userModel.js';
-import { Books } from './bookModel.js';
+import User from './userModel.js';
+import Books from './bookModel.js';
 
-const User = sequelize.define('User', {
+const BorrowedBooks = sequelize.define('BorrowedBooks', {
   id: {
     type: DataTypes.INTEGER,
     allowNull: false,
@@ -21,10 +21,6 @@ const User = sequelize.define('User', {
 }, {
   timestamps: true,
 });
-
-// Associations
-User.belongsToMany(Books, { through: BorrowedBooks });
-Books.belongsToMany(User, { through: BorrowedBooks });
 
 export default BorrowedBooks;
 

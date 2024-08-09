@@ -1,8 +1,6 @@
 // File to handle books ORM in database
 import { DataTypes } from 'sequelize';
 import sequelize from '../utils/dbConfig.js';
-import { User } from './userModel.js';
-import { BorrowedBooks } from './borrowedBook.js';
 
 const Books = sequelize.define('Books', {
   id: {
@@ -56,9 +54,5 @@ const Books = sequelize.define('Books', {
     },
   ],
 });
-
-// Associations
-Books.belongsToMany(User, { through: BorrowedBooks });
-User.belongsToMany(Books, { through: BorrowedBooks });
 
 export default Books;

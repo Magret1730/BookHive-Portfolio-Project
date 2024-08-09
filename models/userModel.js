@@ -2,8 +2,6 @@
 
 import { DataTypes } from 'sequelize';
 import sequelize from '../utils/dbConfig.js';
-import { Books } from './bookModel.js';
-import { BorrowedBooks } from './borrowedBook.js';
 
 const User = sequelize.define('User', {
   id: {
@@ -58,9 +56,5 @@ const User = sequelize.define('User', {
     },
   ],
 });
-
-// Association
-User.belongsToMany(Books, { through: BorrowedBooks });
-Books.belongsToMany(User, { through: BorrowedBooks });
 
 export default User;
