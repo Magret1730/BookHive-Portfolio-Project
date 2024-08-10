@@ -1,4 +1,5 @@
 import Books from "../models/bookModel.js";
+import { Op } from 'sequelize';
 
 const genreTypes = ['Education', 'Religion', 'Kids', 'Family', 'Health', 'Politics',
   'Business', 'Literature', 'Science', 'Art', 'Sport', 'Others']; // 12 genreTypes
@@ -17,8 +18,6 @@ const isValidGenre = (genre) => {
 //  .,;:'"?!()\-: specific punctuation characters
 // $: Asserts the end of the string
 const titleRegex = /^[A-Za-z][\w\s.,;:'"?!()\-]*$/;
-
-
 
 // Regex to validate author fields
 // - ^ and $ ensure the entire string is matched.
@@ -70,14 +69,16 @@ export const addBook = async (req, res) => {
     }
 
     // Validate publishedDate format (assuming it's in YYYY-MM-DD format)
-    if (publishedDate || !dateRegex.test(publishedDate)) {
+    if (!publishedDate || !dateRegex.test(publishedDate)) {
+      console.log(publishedDate);
       return res.status(400).json({ error: 'Published Date must be in YYYY-MM-DD format. Example: 2024-08-09' });
     }
 
     const newBook = await Books.create({
-      title,
-      author,
-      genre: genreTypes.find(validGenre => validGenre.toLowerCase() === genre.toLowerCase()), // Ensure consistent casing
+      title: title.toLowerCase(),
+      author: author.toLowerCase(),
+      // genre: genreTypes.find(validGenre => validGenre.toLowerCase() === genre.toLowerCase()), // Ensure consistent casing
+      genre: genre.toLowerCase(),
       quantity,
       description,
       publishedDate
@@ -89,3 +90,63 @@ export const addBook = async (req, res) => {
     return res.status(500).json({ error: `Error Adding Books: ${error.message}` });
   }
 };
+
+// Method gets all books
+export const allBook = async (req, res) => {
+  try {
+    const books = await Books.findAll();
+
+    return res.status(200).json(books);
+  } catch (error) {
+    return res.status(500).json({ error: `(allBook) ${error.message}` });
+  }
+};
+
+// Method finds book based on genreTypes
+export const search = async (req, res) => {
+  const { genre, author, title } = req.query;
+
+  if (!genre && !author && !title) {
+    return res.status(400).json({ error: 'You can either search by genre, title or author.' });
+  }
+
+  try {
+    const searchType = {};
+
+    if (genre) {
+      if (!isValidGenre(genre)) {
+        return res.status(400).json({ error: `Invalid genre. Genre Types include: ${genreTypes.join(', ')}` });
+      }
+      searchType.genre = { [Op.iLike]: `%${genre}%` }; // Case-insensitive search for genre;
+      // console.log(searchType);
+    }
+
+    if (title) {
+      // Validate title using regex
+      if (!titleRegex.test(title)) {
+        return res.status(400).json({ error: 'Invalid title. Title can only begin with letter and may only contain letters, numbers, and certain special characters.' });
+      }
+      searchType.title = { [Op.iLike]: `%${title}%` }; // Case-insensitive search for title
+    }
+
+    if (author) {
+      // Validate author using regex
+      if (!authorRegex.test(author)) {
+        return res.status(400).json({ error: 'Invalid author name. Author name can only begin with letter and may only contain letters, spaces, periods, hyphens, and apostrophes.' });
+      }
+      searchType.author = { [Op.iLike]: `%${author}%` }; // Case-insensitive search for author
+    }
+
+    // Find books based on the search criteria
+    const books = await Books.findAll({ where: searchType });
+
+    // If no books are found, return a message
+    if (books.length === 0) {
+      return res.status(404).json({ message: 'No books found matching the search criteria.' });
+    }
+
+    return res.status(200).json(books);
+  } catch (error) {
+    return res.status(500).json({ error: `(search) ${error.message}` });
+  }
+}
