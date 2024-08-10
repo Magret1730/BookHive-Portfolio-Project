@@ -1,3 +1,4 @@
+import { error } from "console";
 import Books from "../models/bookModel.js";
 import { Op } from 'sequelize';
 
@@ -41,6 +42,7 @@ const authorRegex = /^[A-Za-z][\p{L} .'-]*$/u;
 // The u flag enables Unicode matching.
 const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
 
+// Method to add/create books
 export const addBook = async (req, res) => {
   try {
     const { title, author, genre, quantity, description, publishedDate } = req.body;
@@ -84,7 +86,8 @@ export const addBook = async (req, res) => {
       publishedDate
     });
 
-    return res.status(201).json(newBook);
+    // return res.status(201).json(newBook);
+    return res.status(201).json({ message: `Book with ${title} and author ${author} has been created ${newBook}` });
   } catch (error) {
     console.log(`Error Adding Books: ${error.message}`)
     return res.status(500).json({ error: `Error Adding Books: ${error.message}` });
@@ -98,7 +101,7 @@ export const allBook = async (req, res) => {
 
     return res.status(200).json(books);
   } catch (error) {
-    return res.status(500).json({ error: `(allBook) ${error.message}` });
+    return res.status(500).json({ error: `Getting all books: ${error.message}` });
   }
 };
 
@@ -147,6 +150,27 @@ export const search = async (req, res) => {
 
     return res.status(200).json(books);
   } catch (error) {
-    return res.status(500).json({ error: `(search) ${error.message}` });
+    return res.status(500).json({ error: `Error searching: ${error.message}` });
+  }
+}
+
+// Method to delete books
+export const deleteBook = async (req, res) => {
+  const { id } = req.params;
+  try {
+    if (!id) {
+      return res.status(400).json({ error: 'Book ID is required' });
+    }
+
+    const book = await Books.findByPk(id);
+    if (!book) {
+      return res.status(404).json({ error: 'Book not found' });
+    }
+    // console.log(book);
+    await Books.destroy({ where: { id } });
+
+    return res.status(200).json({ message: `Book with ID ${id} and title (${book.title}) and author (${book.author}) was successfully deleted.` });
+  } catch (error) {
+    return res.status(500).json({ error: `Error deleting book: ${error.message}` });
   }
 }
