@@ -4,6 +4,7 @@ import express from 'express';
 import cookieParser from 'cookie-parser';
 import db from './models/indexModel.js';
 import userRoutes from './routes/userRoutes.js';
+import bookRoutes from './routes/bookRoutes.js';
 // import redisClient from './utils/redis.js';
 
 const app = express();
@@ -31,3 +32,4 @@ const environment = process.env.NODE_ENV || 'production';
 
 // Routes Middlewares
 app.use('/api/v1/users', userRoutes);
+app.use('/api/v1/books', bookRoutes);

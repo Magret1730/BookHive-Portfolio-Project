@@ -17,7 +17,7 @@ export const registerUser = async (req, res) => {
     const { id, firstName, lastName, email, password } = req.body;
 
     // Basic checks for empty fields
-    if (!(firstName && lastName && email && password)) {
+    if (!firstName && !lastName && !email && !password) {
       return res.status(400).send('All fields are compulsory');
     }
 

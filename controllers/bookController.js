@@ -1,0 +1,91 @@
+import Books from "../models/bookModel.js";
+
+const genreTypes = ['Education', 'Religion', 'Kids', 'Family', 'Health', 'Politics',
+  'Business', 'Literature', 'Science', 'Art', 'Sport', 'Others']; // 12 genreTypes
+
+// Function to validate genre
+const isValidGenre = (genre) => {
+  return genreTypes.some(validGenre => validGenre.toLowerCase() === genre.toLowerCase());
+};
+
+// Regex to validate title fields
+// ^: Asserts the start of the string
+// [A-Za-z] : Ensures the title starts with an alphabetic letter (either uppercase or lowercase)
+// [\w\s.,;:'"?!()\-]* : Allows zero or more of the following characters after the initial letter:
+// \w: any word character (letters, digits, and underscores)
+//  \s: any whitespace character (spaces, tabs, etc.)
+//  .,;:'"?!()\-: specific punctuation characters
+// $: Asserts the end of the string
+const titleRegex = /^[A-Za-z][\w\s.,;:'"?!()\-]*$/;
+
+
+
+// Regex to validate author fields
+// - ^ and $ ensure the entire string is matched.
+// [A-Za-z] : Ensures the title starts with an alphabetic letter (either uppercase or lowercase)
+// - \p{L} matches any kind of letter from any language (including accented and non-Latin characters).
+// - The characters .'- inside square brackets [] are special characters that are allowed in the author's name (e.g., "Jean-Luc", "O'Reilly", "Dr. Seuss").
+// - The + quantifier matches one or more occurrences of the allowed characters.
+// - The u flag allows Unicode characters to be matched.
+const authorRegex = /^[A-Za-z][\p{L} .'-]*$/u;
+
+// Regex to validate date in YYYY-MM-DD format
+// - ^ asserts the position at the start of the string.
+// - \d{4} matches exactly four digits for the year (YYYY).
+// - - matches a literal hyphen (separator between year, month, and day).
+// - \d{2} matches exactly two digits for the month (MM).
+// - - matches another literal hyphen (separator between month and day).
+// - \d{2} matches exactly two digits for the day (DD).
+// - $ asserts the position at the end of the string, ensuring the entire string matches the pattern without extra characters.
+// Example of a valid date: "2024-08-09"
+// Example of an invalid date: "2024-8-9" (month and day need two digits each)
+// The u flag enables Unicode matching.
+const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+
+export const addBook = async (req, res) => {
+  try {
+    const { title, author, genre, quantity, description, publishedDate } = req.body;
+    if (!title || !author || !genre || !quantity) {
+      return res.status(500).json({ error: 'title, author, genre and quantity fields are important' });
+    }
+
+    // Validate title using regex
+    if (!titleRegex.test(title)) {
+      return res.status(400).json({ error: 'Invalid title. Title can only begin with letter and may only contain letters, numbers, and certain special characters.' });
+    }
+
+    // Validate author using regex
+    if (!authorRegex.test(author)) {
+      return res.status(400).json({ error: 'Invalid author name. Author name can only begin with letter and may only contain letters, spaces, periods, hyphens, and apostrophes.' });
+    }
+
+    // Check if genre is valid (case-insensitive)
+    if (!isValidGenre(genre)) {
+      return res.status(400).json({ error: `Invalid genre. Genre Types include: ${genreTypes.join(', ')}` });
+    }
+
+    // Check if quantity is a positive integer
+    if (isNaN(quantity) || quantity <= 0) {
+      return res.status(400).json({ error: 'Quantity must be a positive integer' });
+    }
+
+    // Validate publishedDate format (assuming it's in YYYY-MM-DD format)
+    if (publishedDate || !dateRegex.test(publishedDate)) {
+      return res.status(400).json({ error: 'Published Date must be in YYYY-MM-DD format. Example: 2024-08-09' });
+    }
+
+    const newBook = await Books.create({
+      title,
+      author,
+      genre: genreTypes.find(validGenre => validGenre.toLowerCase() === genre.toLowerCase()), // Ensure consistent casing
+      quantity,
+      description,
+      publishedDate
+    });
+
+    return res.status(201).json(newBook);
+  } catch (error) {
+    console.log(`Error Adding Books: ${error.message}`)
+    return res.status(500).json({ error: `Error Adding Books: ${error.message}` });
+  }
+};
