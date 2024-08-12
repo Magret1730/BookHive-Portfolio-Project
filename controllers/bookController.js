@@ -120,6 +120,25 @@ export const allBook = async (req, res) => {
   }
 };
 
+// Method to find book based on ID
+export const BookById = async (req, res) => {
+  const { id } = req.params;
+  try {
+    if (!id) {
+      return res.status(400).json({ error: 'Book ID is required' });
+    }
+
+    const book = await Books.findByPk(id);
+    if (!book) {
+      return res.status(404).json({ error: 'Book not found' });
+    }
+
+    return res.status(200).json(book);
+  } catch (error) {
+    return res.status(500).json({ error: `Error deleting book: ${error.message}` });
+  }
+}
+
 // Method finds book based on genreTypes
 export const search = async (req, res) => {
   const { genre, author, title } = req.query;
