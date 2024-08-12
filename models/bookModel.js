@@ -36,6 +36,7 @@ const Books = sequelize.define('Books', {
     validate: {
       min: 0, // Ensures quantity is non-negative
     },
+  },
   description: {
     type: DataTypes.TEXT,
     allowNull: true,
@@ -44,7 +45,6 @@ const Books = sequelize.define('Books', {
     type: DataTypes.DATE,
     allowNull: true,
   },
-  }
 }, {
   timestamps: true, // This enables automatic createdAt and updatedAt
   indexes: [ // This improve search performance by allowing the database to quickly locate and retrieve rows that match fields
