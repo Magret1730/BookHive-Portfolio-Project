@@ -1,6 +1,6 @@
-// import { error } from "console";
-// import moment from 'moment';
 import Books from "../models/bookModel.js";
+// import User from "../models/userModel.js";
+import BorrowedBooks from "../models/borrowedBook.js";
 import { Op } from 'sequelize';
 
 const genreTypes = ['Education', 'Religion', 'Kids', 'Family', 'Health', 'Politics',
@@ -19,7 +19,7 @@ const isValidGenre = (genre) => {
 //  \s: any whitespace character (spaces, tabs, etc.)
 //  .,;:'"?!()\-: specific punctuation characters
 // $: Asserts the end of the string
-const titleRegex = /^[A-Za-z][\w\s.,;:'"?!()\-]*$/;
+const titleRegex = /^[A-Za-z0-9][\w\s.,;:'"?!()\-]*$/;
 
 // Regex to validate author fields
 // - ^ and $ ensure the entire string is matched.
@@ -28,7 +28,7 @@ const titleRegex = /^[A-Za-z][\w\s.,;:'"?!()\-]*$/;
 // - The characters .'- inside square brackets [] are special characters that are allowed in the author's name (e.g., "Jean-Luc", "O'Reilly", "Dr. Seuss").
 // - The + quantifier matches one or more occurrences of the allowed characters.
 // - The u flag allows Unicode characters to be matched.
-const authorRegex = /^[A-Za-z][\p{L} .'-]*$/u;
+const authorRegex = /^[A-Za-z0-9][\p{L} .'-]*$/u;
 
 // Regex to validate date in YYYY-MM-DD format
 // - ^ asserts the position at the start of the string.
@@ -58,7 +58,7 @@ export const addBook = async (req, res) => {
 
     // Validate author using regex
     if (!authorRegex.test(author)) {
-      return res.status(400).json({ error: 'Invalid author name. Author name can only begin with letter and may only contain letters, spaces, periods, hyphens, and apostrophes.' });
+      return res.status(400).json({ error: 'Invalid author name. Author name can only begin with letter and may only contain letters, numbers, spaces, periods, hyphens, and apostrophes.' });
     }
 
     // Check if genre is valid (case-insensitive)
@@ -305,5 +305,81 @@ export const editBook = async (req, res) => {
   } catch (error) {
     console.log(`Error Updating Books: ${error.message}`)
     return res.status(500).json({ error: `Error Updating Books: ${error.message}` });
+  }
+}
+
+// Method to borrow books
+export const borrowBook = async (req, res) => {
+  const { bookId } = req.params;
+  const userId = req.user.id; // Gets userId from authenticated user
+
+  try {
+    if (!bookId) {
+      return res.status(400).json({ error: 'Please provide bookId' });
+    }
+
+    // Check if the user has already borrowed this book and not returned it
+    const existingBorrowRecord = await BorrowedBooks.findOne({ where: { bookId, userId, returnDate: null } });
+    if (existingBorrowRecord) {
+      return res.status(400).json({ error: 'You have already borrowed this book and not returned it yet' });
+    }
+
+    const book = await Books.findByPk(bookId);
+    if (!book) {
+      return res.status(404).json({ error: 'Book not found' });
+    }
+
+    // Check for book quantity
+    if (book.quantity <= 0) {
+      return res.status(400).json({ error: 'Book is not available' });
+    }
+
+    // Create borrowedBook
+    const borrowRecord = await BorrowedBooks.create({
+      borrowDate: new Date(),
+      userId,
+      bookId,
+    });
+
+    // Decrement the book quantity
+    await Books.update({ quantity: book.quantity - 1 }, { where: { id: bookId } });
+
+    return res.status(201).json({ message: 'Book borrowed successfully', borrowRecord});
+  } catch (error) {
+    return res.status(500).json({ error: `Error Borrowing Books: ${error.message}` });
+  }
+}
+
+// Method to return books
+export const returnBook = async (req, res) => {
+  const { bookId } = req.params;
+  const userId = req.user.id; // Gets userId from authenticated user
+
+  try {
+    if (!bookId) {
+      return res.status(400).json({ error: 'Please provide bookId' });
+    }
+
+    // Find the borrow record for the user and book
+    const borrowRecord = await BorrowedBooks.findOne({ where: { bookId, userId, returnDate: null } });
+    if (!borrowRecord) {
+      return res.status(404).json({ error: 'Borrowed book record not found or already returned' });
+    }
+
+    // Update the borrow record with the return date
+    await BorrowedBooks.update({ returnDate: new Date() }, { where: { id: borrowRecord.id } });
+
+    // Find the book
+    const book = await Books.findByPk(bookId);
+    if (!book) {
+      return res.status(404).json({ error: 'Book not found' });
+    }
+
+    // Increment the book quantity
+    await Books.update({ quantity: book.quantity + 1 }, { where: { id: bookId } });
+
+    return res.status(201).json({ message: 'Book returned successfully', book});
+  } catch (error) {
+    return res.status(500).json({ error: `Error Returning Book: ${error.message}` });
   }
 }

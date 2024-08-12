@@ -41,3 +41,5 @@ module.exports = {
     await queryInterface.bulkDelete('Users', { email: 'taskifyhubproject@gmail.com' }, {});
   }
 };
+
+// npm run admin-seed - To create admin seed in db
