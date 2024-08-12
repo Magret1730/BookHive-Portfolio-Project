@@ -1,4 +1,5 @@
-import { error } from "console";
+// import { error } from "console";
+// import moment from 'moment';
 import Books from "../models/bookModel.js";
 import { Op } from 'sequelize';
 
@@ -76,10 +77,24 @@ export const addBook = async (req, res) => {
       return res.status(400).json({ error: 'Published Date must be in YYYY-MM-DD format. Example: 2024-08-09' });
     }
 
+    // Format the date as YYYY-MM-DD
+    // const formattedDate = publishedDate ? moment(publishedDate).format('YYYY-MM-DD') : null;
+
+    // Check if a book with the same title, author, and publishedDate already exists
+    const existingBook = await Books.findOne({
+      where: {
+        title: title.toLowerCase(),
+        author: author.toLowerCase()
+      }
+    });
+
+    if (existingBook) {
+      return res.status(400).json({ error: 'A book with the same title and author already exists' });
+    }
+
     const newBook = await Books.create({
       title: title.toLowerCase(),
       author: author.toLowerCase(),
-      // genre: genreTypes.find(validGenre => validGenre.toLowerCase() === genre.toLowerCase()), // Ensure consistent casing
       genre: genre.toLowerCase(),
       quantity,
       description,
@@ -87,7 +102,7 @@ export const addBook = async (req, res) => {
     });
 
     // return res.status(201).json(newBook);
-    return res.status(201).json({ message: `Book with ${title} and author ${author} has been created ${newBook}` });
+    return res.status(201).json({ message: 'Book added successfully', newBook });
   } catch (error) {
     console.log(`Error Adding Books: ${error.message}`)
     return res.status(500).json({ error: `Error Adding Books: ${error.message}` });
@@ -172,5 +187,104 @@ export const deleteBook = async (req, res) => {
     return res.status(200).json({ message: `Book with ID ${id} and title (${book.title}) and author (${book.author}) was successfully deleted.` });
   } catch (error) {
     return res.status(500).json({ error: `Error deleting book: ${error.message}` });
+  }
+}
+
+// Method to edit books
+export const editBook = async (req, res) => {
+  const { id } = req.params;
+  let { title, author, genre, quantity, description, publishedDate } = req.body;
+  // console.log(id);
+  try {
+    if (!id) {
+      return res.status(400).json({ error: 'Book ID is required' });
+    }
+
+    // Find book by ID
+    const book = await Books.findByPk(id);
+    if (!book) {
+      return res.status(404).json({ error: 'Book not found' });
+    }
+
+    // Validate title using regex
+    if (title) {
+      if (!titleRegex.test(title)) {
+        return res.status(400).json({ error: 'Invalid title. Title can only begin with letter and may only contain letters, numbers, and certain special characters.' });
+      }
+      title = title.toLowerCase();
+      if (book.title === title) {
+        return res.status(400).json({ error: 'Title cannot be changed because it contains the same title' })
+      }
+    }
+
+    // Validate author using regex
+    if (author) {
+      if (!authorRegex.test(author)) {
+        return res.status(400).json({ error: 'Invalid author name. Author name can only begin with letter and may only contain letters, spaces, periods, hyphens, and apostrophes.' });
+      }
+      author = author.toLowerCase();
+      if (book.author === author) {
+        return res.status(400).json({ error: 'Author cannot be changed because it contains the same author' })
+      }
+    }
+
+    // Check if genre is valid (case-insensitive)
+    if (genre) {
+      if (!isValidGenre(genre)) {
+        return res.status(400).json({ error: `Invalid genre. Genre Types include: ${genreTypes.join(', ')}` });
+      }
+      genre = genre.toLowerCase();
+      if (book.genre === genre) {
+        return res.status(400).json({ error: 'Genre cannot be changed because it contains the same genre' })
+      }
+    }
+
+    // Check if quantity is a positive integer
+    if (quantity) {
+      if (isNaN(quantity) || quantity <= 0) {
+        return res.status(400).json({ error: 'Quantity must be a positive integer' });
+      }
+      // quantity = quantity.toLowerCase();
+      if (book.quantity === quantity) {
+        return res.status(400).json({ error: 'Quantity cannot be changed because it contains the same quantity' })
+      }
+    }
+
+    // Validate publishedDate format (assuming it's in YYYY-MM-DD format)
+    // let formattedDate = null;
+    if (publishedDate) {
+      if (!publishedDate || !dateRegex.test(publishedDate)) {
+        console.log(publishedDate);
+        return res.status(400).json({ error: 'Published Date must be in YYYY-MM-DD format. Example: 2024-08-09' });
+      }
+      // Format the date as YYYY-MM-DD
+      // formattedDate = moment(publishedDate).format('YYYY-MM-DD');
+
+      if (book.publishedDate === publishedDate) {
+        return res.status(400).json({ error: 'PublishedDate cannot be changed because it contains the same publishedDate' })
+      }
+    }
+
+    // Validate description
+    if (description) {
+      if (book.description === description) {
+        return res.status(400).json({ error: 'Description cannot be changed because it contains the same description' })
+      }
+    }
+
+    // Update the book fields if they exist in the request body
+    const updatedBook = await book.update({
+      title: title ? title.toLowerCase() : book.title,
+      author: author ? author.toLowerCase() : book.author,
+      genre: genre ? genre.toLowerCase() : book.genre,
+      quantity: quantity || book.quantity,
+      description: description || book.description,
+      publishedDate: publishedDate || book.publishedDate,
+    });
+
+    return res.status(200).json({ message: 'Book updated successfully', book });
+  } catch (error) {
+    console.log(`Error Updating Books: ${error.message}`)
+    return res.status(500).json({ error: `Error Updating Books: ${error.message}` });
   }
 }
