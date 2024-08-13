@@ -12,6 +12,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+// Method to register
 export const registerUser = async (req, res) => {
   try {
     const { id, firstName, lastName, email, password } = req.body;
@@ -88,6 +89,7 @@ export const registerUser = async (req, res) => {
   }
 };
 
+// Method to login
 export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -138,6 +140,7 @@ export const loginUser = async (req, res) => {
   }
 };
 
+// Method to logout
 export const logoutUser = async (req, res) => {
   try {
     const userId = req.user.id; // Get user's id if authenticated
@@ -154,6 +157,7 @@ export const logoutUser = async (req, res) => {
   }
 };
 
+// Method to get all users
 export const allUsers = async (req, res) => {
   // Get page and size from query params, with defaults
   const page = parseInt(req.query.page) || 1; // Default to page 1
@@ -185,6 +189,7 @@ export const allUsers = async (req, res) => {
   }
 };
 
+// Method to get link in email
 export const forgotPassword = async (req, res) => {
   const { email } = req.body;
   try {
@@ -229,6 +234,7 @@ export const forgotPassword = async (req, res) => {
   }
 };
 
+// Method to resetPassword
 export const resetPassword = async (req, res) => {
   const { resetLink, newPassword } = req.body;
   if (!resetLink || !newPassword) {
@@ -266,5 +272,38 @@ export const resetPassword = async (req, res) => {
     return res.status(200).json({ message: 'Your password has been changed. Please log in with your new password.' });
   } catch (error) {
     res.status(401).json({ error: 'Incorrect or expired token. Please request a new password reset link by entering your email to ge another link in your email address.' });
+  }
+};
+
+// Method for user to delete/deactivate account
+export const deleteAccount = async (req, res) => {
+  try {
+    const user = req.user; // Get user if authenticated
+    if (!user) {
+      return res.status(401).json({ error: 'User is not authenticated' });
+    }
+
+    const userId = user.id;
+
+    // Delete the user's session from Redis
+    await redisClient.del(userId.toString());
+
+    // Clear the authentication token cookie
+    res.clearCookie('token', {
+      httpOnly: true,
+      sameSite: 'strict'
+    });
+
+    const userDetails = await User.findOne({ where: { id: userId } });
+    if (!userDetails) {
+      return res.status(400).json({ error: 'User with this ID does not exist' });
+    }
+
+    // Deactivate or delete the user
+    await User.destroy({ where: { id: userId } });
+
+    res.status(200).json({ success: true, message: 'User account deactivated successfully.' });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
   }
 };
