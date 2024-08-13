@@ -5,7 +5,7 @@ import cookieParser from 'cookie-parser';
 import db from './models/indexModel.js';
 import userRoutes from './routes/userRoutes.js';
 import bookRoutes from './routes/bookRoutes.js';
-// import redisClient from './utils/redis.js';
+import borrowRoutes from './routes/borrowRoutes.js';
 
 const app = express();
 const port = process.env.PORT || 8080;
@@ -33,3 +33,4 @@ const environment = process.env.NODE_ENV || 'production';
 // Routes Middlewares
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/books', bookRoutes);
+app.use('/api/v1/borrow', borrowRoutes);
