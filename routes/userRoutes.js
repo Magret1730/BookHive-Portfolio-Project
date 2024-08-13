@@ -6,7 +6,10 @@ import { registerUser, loginUser, logoutUser,
 import { adminCheck } from '../middleware/adminCheck.js';
 import { authenticate } from '../middleware/authenticate.js';
 
+// Only admin routes
 router.get('/', authenticate, adminCheck, allUsers);
+
+// Both admin and user routes
 router.post('/register', registerUser);
 router.post('/login', loginUser);
 router.post('/logout', authenticate, logoutUser);
