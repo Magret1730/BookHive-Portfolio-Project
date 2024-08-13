@@ -155,12 +155,31 @@ export const logoutUser = async (req, res) => {
 };
 
 export const allUsers = async (req, res) => {
+  // Get page and size from query params, with defaults
+  const page = parseInt(req.query.page) || 1; // Default to page 1
+  const size = parseInt(req.query.size) || 5; // Default to 5 items per page // specifies how many records to return
+  const offset = (page - 1) * size; // specifies where to start the records based on the current page.
+
   try {
-    const users = await User.findAll({
-      attributes: { exclude: ['password'] } // Excluded the password from the result
+    const { count, rows: users } = await User.findAndCountAll({
+      attributes: { exclude: ['password'] }, // Excluded the password from the result
+      limit: size,
+      offset,
+      order: [['createdAt', 'DESC']], // Optional: order by creation date
     });
 
-    res.status(200).json(users);
+    if (count === 0) {
+      return res.status(404).json({ error: 'No borrowed book history found.' });
+    }
+
+    // Calculate total pages
+    const totalPages = Math.ceil(count / size);
+
+    res.status(200).json({
+      users,
+      totalPages,
+      currentPage: page,
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
