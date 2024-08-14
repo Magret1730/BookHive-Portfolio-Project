@@ -70,13 +70,12 @@ export const addBook = async (req, res) => {
     }
 
     // Validate publishedDate format (assuming it's in YYYY-MM-DD format)
-    if (!publishedDate || !dateRegex.test(publishedDate)) {
-      console.log(publishedDate);
-      return res.status(400).json({ error: 'Published Date must be in YYYY-MM-DD format. Example: 2024-08-09' });
+    if (publishedDate) {
+      if (!dateRegex.test(publishedDate)) {
+        // console.log(publishedDate);
+        return res.status(400).json({ error: 'Published Date must be in YYYY-MM-DD format. Example: 2024-08-09' });
+      }
     }
-
-    // Format the date as YYYY-MM-DD
-    // const formattedDate = publishedDate ? moment(publishedDate).format('YYYY-MM-DD') : null;
 
     // Check if a book with the same title, author, and publishedDate already exists
     const existingBook = await Books.findOne({
@@ -268,14 +267,11 @@ export const editBook = async (req, res) => {
     }
 
     // Validate publishedDate format (assuming it's in YYYY-MM-DD format)
-    // let formattedDate = null;
     if (publishedDate) {
       if (!publishedDate || !dateRegex.test(publishedDate)) {
         console.log(publishedDate);
         return res.status(400).json({ error: 'Published Date must be in YYYY-MM-DD format. Example: 2024-08-09' });
       }
-      // Format the date as YYYY-MM-DD
-      // formattedDate = moment(publishedDate).format('YYYY-MM-DD');
 
       if (book.publishedDate === publishedDate) {
         return res.status(400).json({ error: 'PublishedDate cannot be changed because it contains the same publishedDate' })

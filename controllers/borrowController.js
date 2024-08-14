@@ -41,7 +41,7 @@ export const borrowBook = async (req, res) => {
   } catch (error) {
     return res.status(500).json({ error: `Error Borrowing Books: ${error.message}` });
   }
-}
+};
 
 // Method to return books
 export const returnBook = async (req, res) => {
@@ -71,11 +71,13 @@ export const returnBook = async (req, res) => {
     // Increment the book quantity
     await Books.update({ quantity: book.quantity + 1 }, { where: { id: bookId } });
 
-    return res.status(201).json({ message: 'Book returned successfully', book});
+    const newQuantity = book.quantity + 1;
+
+    return res.status(201).json({ message: 'Book returned successfully', book, newQuantity }); // It is returning book quantity - 1 because the
   } catch (error) {
     return res.status(500).json({ error: `Error Returning Book: ${error.message}` });
   }
-}
+};
 
 // Method to get all borrowed books history per User
 export const BorrowHistory = async (req, res) => {
@@ -85,7 +87,7 @@ export const BorrowHistory = async (req, res) => {
   }
 
   const userId = req.user.id; // Gets userId from authenticated user
-  const userFirstName = user.firstName;
+  const userFirstName = user.firstName; // User's firstname
 
   // Get page and size from query params, with defaults
   const page = parseInt(req.query.page) || 1; // Default to page 1
@@ -113,7 +115,7 @@ export const BorrowHistory = async (req, res) => {
     const totalPages = Math.ceil(count / size);
 
     return res.status(200).json({ 
-      message: `Borrowed books history retrieved successfully for user with ID ${userId}. and name ${userFirstName}`,
+      message: `Borrowed books history retrieved successfully for user with ID ${userId} and first name ${userFirstName}`,
       borrowRecord,
       totalPages,
       currentPage: page,
@@ -121,7 +123,7 @@ export const BorrowHistory = async (req, res) => {
   } catch (error) {
     return res.status(500).json({ error: `Error getting borrowed book history: ${error.message}` });
   }
-}
+};
 
 // Method to get all borrowed books history for a specific user (Admin only)
 export const getUserBorrowHistory = async (req, res) => {
