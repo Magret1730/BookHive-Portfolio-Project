@@ -4,6 +4,7 @@ import jsonwebtoken from 'jsonwebtoken';
 import nodemailer from 'nodemailer';
 import redisClient from '../utils/redis.js';
 
+// configuration for nodemailer
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
@@ -309,6 +310,7 @@ export const deleteAccount = async (req, res) => {
   }
 };
 
+// Method for user's to edit email, firstName, lastName
 export const editUserDetails = async (req, res) => {
   const { email } = req.user; // authenticated user
   const { newFirstName, newLastName, newEmail} = req.body;
