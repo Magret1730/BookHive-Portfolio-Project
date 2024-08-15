@@ -20,7 +20,7 @@ export const registerUser = async (req, res) => {
 
     // Basic checks for empty fields
     if (!firstName && !lastName && !email && !password) {
-      return res.status(400).json({ error: 'All fields are compulsory'});
+      return res.status(400).json({ error: 'All fields are compulsory' });
     }
 
     // First and Last name length validation of least 2 letters
@@ -141,7 +141,7 @@ export const loginUser = async (req, res) => {
   }
 };
 
-// Method to logout
+// Method for users to logout
 export const logoutUser = async (req, res) => {
   try {
     const userId = req.user.id; // Get user's id if authenticated
