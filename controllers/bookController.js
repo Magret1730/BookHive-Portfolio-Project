@@ -119,13 +119,13 @@ export const allBook = async (req, res) => {
 
 // Method to find book based on ID
 export const BookById = async (req, res) => {
-  const { id } = req.params;
+  const { bookId } = req.params;
   try {
-    if (!id) {
+    if (!bookId) {
       return res.status(400).json({ error: 'Book ID is required' });
     }
 
-    const book = await Books.findByPk(id);
+    const book = await Books.findByPk(bookId);
     if (!book) {
       return res.status(404).json({ error: 'Book not found' });
     }
@@ -187,20 +187,20 @@ export const search = async (req, res) => {
 
 // Method to delete books
 export const deleteBook = async (req, res) => {
-  const { id } = req.params;
+  const { bookId } = req.params;
   try {
-    if (!id) {
+    if (!bookId) {
       return res.status(400).json({ error: 'Book ID is required' });
     }
 
-    const book = await Books.findByPk(id);
+    const book = await Books.findByPk(bookId);
     if (!book) {
       return res.status(404).json({ error: 'Book not found' });
     }
     // console.log(book);
-    await Books.destroy({ where: { id } });
+    await Books.destroy({ where: { bookId } });
 
-    return res.status(200).json({ message: `Book with ID ${id} and title (${book.title}) and author (${book.author}) was successfully deleted.` });
+    return res.status(200).json({ message: `Book with ID ${bookId} and title (${book.title}) and author (${book.author}) was successfully deleted.` });
   } catch (error) {
     return res.status(500).json({ error: `Error deleting book: ${error.message}` });
   }
@@ -208,16 +208,16 @@ export const deleteBook = async (req, res) => {
 
 // Method to edit books
 export const editBook = async (req, res) => {
-  const { id } = req.params;
+  const { bookId } = req.params;
   let { title, author, genre, quantity, description, publishedDate } = req.body;
-  // console.log(id);
+  // console.log(bookId);
   try {
-    if (!id) {
+    if (!bookId) {
       return res.status(400).json({ error: 'Book ID is required' });
     }
 
     // Find book by ID
-    const book = await Books.findByPk(id);
+    const book = await Books.findByPk(bookId);
     if (!book) {
       return res.status(404).json({ error: 'Book not found' });
     }
