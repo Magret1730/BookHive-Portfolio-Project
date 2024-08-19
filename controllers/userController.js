@@ -19,7 +19,7 @@ export const registerUser = async (req, res) => {
     const { id, firstName, lastName, email, password } = req.body;
 
     // Basic checks for empty fields
-    if (!firstName && !lastName && !email && !password) {
+    if (!firstName || !lastName || !email || !password) {
       return res.status(400).json({ error: 'All fields are compulsory' });
     }
 
@@ -35,7 +35,9 @@ export const registerUser = async (req, res) => {
     }
 
     // Email validation (basic format check)
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    // const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    // const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    const emailRegex = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
     if (!emailRegex.test(email)) {
       return res.status(400).json({ error: 'Invalid email format. Example of valid format: user@example.com' });
     }
@@ -45,9 +47,10 @@ export const registerUser = async (req, res) => {
       return res.status(401).json({ error: 'User already exist with this email' });
     }
 
-    // Password validation (minimum 4 characters, optionally add more checks)
-    if (password.length < 4) {
-      return res.status(400).json({ error: 'Password should be at least 4 characters long' });
+    // Password validations
+    const passwordRegex = /^(?=.*[a-zA-Z])(?=.*\d).{4,}$/;
+    if (!passwordRegex.test(password)) {
+      return res.status(401).json({ error: 'Password should contain at least one letter and one number, and be at least 4 characters long' });
     }
 
     const encyptedPwd = await bcrypt.hash(password, 10);
@@ -83,7 +86,7 @@ export const registerUser = async (req, res) => {
       expires: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
     });
 
-    res.status(200).json(newUser);
+    res.status(201).json(newUser);
 
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -98,12 +101,12 @@ export const loginUser = async (req, res) => {
     // console.log(email, password);
 
     if (!(email && password)) {
-      return res.status(400).send('All fields are compulsory');
+      return res.status(400).json({ error: 'All fields are compulsory' });
     };
 
     const existingUser = await User.findOne({ where: { email } });
     if (!existingUser) {
-      return res.status(401).send('User with this email does not exist');
+      return res.status(401).json({ error: 'Invalid email or password' });
     }
 
     if (existingUser && (await bcrypt.compare(password, existingUser.password))) {
@@ -134,29 +137,29 @@ export const loginUser = async (req, res) => {
         success: true, token, existingUser
       });
     } else {
-        res.status(401).send('Invalid password');
+        res.status(401).json({ error: 'Invalid email or password' });
     }
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 };
 
-// Method for users to logout
-export const logoutUser = async (req, res) => {
-  try {
-    const userId = req.user.id; // Get user's id if authenticated
-    await redisClient.del(userId.toString()); // Delete the user's session from Redis
+// Method for users to logout // Handled by frontend
+// export const logoutUser = async (req, res) => {
+//   try {
+//     const userId = req.user.id; // Get user's id if authenticated
+//     await redisClient.del(userId.toString()); // Delete the user's session from Redis
 
-    res.clearCookie('token', {
-      httpOnly: true,
-      sameSite: 'strict'
-    });
+//     res.clearCookie('token', {
+//       httpOnly: true,
+//       sameSite: 'strict'
+//     });
 
-    res.status(200).json({ success: true, message: 'User logged out successfully' });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-};
+//     res.status(200).json({ success: true, message: 'User logged out successfully' });
+//   } catch (error) {
+//     res.status(500).json({ success: false, error: error.message });
+//   }
+// };
 
 // Method to get all users
 export const allUsers = async (req, res) => {
@@ -250,9 +253,10 @@ export const resetPassword = async (req, res) => {
       return res.status(401).json({ error: 'User with this token does not exist' });
     }
 
-    // Password validation (minimum 4 characters, optionally add more checks)
-    if (newPassword.length < 4) {
-        return res.status(400).send('Password should be at least 4 characters long');
+    // Password validations
+    const passwordRegex = /^(?=.*[a-zA-Z])(?=.*\d).{4,}$/;
+    if (!passwordRegex.test(newPassword)) {
+      return res.status(401).json({ error: 'New password should contain at least one letter and one number, and be at least 4 characters long' });
     }
 
     // Encrypt the new password
@@ -317,13 +321,14 @@ export const editUserDetails = async (req, res) => {
   // console.log('Edit user details');
 
   if (!newEmail && !newFirstName && !newLastName) {
-    return res.status(400).json({ error: 'Please put in either your email, firstName or lastName' });
+    return res.status(400).json({ error: 'Please provide either your email, first name, or last name.' });
   };
 
   // Validate newEmail if provided
   if (newEmail) {
     // Email validation (basic format check)
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    // const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailRegex = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
     if (!emailRegex.test(newEmail)) {
       return res.status(400).json({ error: 'Invalid email format. Example of valid format: user@example.com' });
     }
