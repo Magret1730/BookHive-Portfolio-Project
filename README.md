@@ -19,7 +19,7 @@ Welcome to the BookHive Backend Application!
 This is a backend library interface built using Node.js, Express, Sequelize, and PostgreSQL. It allows users to browse and review books, with separate interfaces and functionalities for admins and users.
 
 ## Features
-- <b> User Authentication </b>: Registration, login, logout with token-based authentication.
+- <b> User Authentication </b>: Registration and login with token-based authentication.
 - <b> Security </b>: Passwords are not stored in plain text in the database.
 - <b> Password Reset </b>: User's can reset password using nodemailer.
 - <b> Book Management </b>: Admins can add, update, or remove books.
@@ -45,44 +45,44 @@ This is a backend library interface built using Node.js, Express, Sequelize, and
 - Configure **[environment](./.env.md)** variables.
 - Start the application: `npm start`
 
-The application will be accessible at `http://localhost:8000`
+The application will be accessible on `http://localhost:8000`
 
 ## API Endpoints
 
 ### users endpoint `/api/v1/users`
 - Only admin routes
-Routes to get all users. `GET /`
+    1. Route to get all users. `GET /`
 
 - Only user routes
-Routes to delete/deactivate account. `DELETE /deactivate`
-Route to edit User details. `PUT /edit`
+    1. Route to delete/deactivate account. `DELETE /deactivate`
+    2. Route to edit User details. `PUT /edit`
 
 - Both admin and user routes
-Routes to register. `POST /register`
-Routes to login. `POST /login`
-Routes to logout. `POST /logout`
-Routes to forgot Password. `PUT /forgotPassword` Supply email in req.body
-Routes to reset Password. `PUT /resetPassword` Supply newPassword, resetLink in req.body
+    1. Route to register. `POST /register` Supply firstName, lastName, email and password
+    2. Route to login. `POST /login`
+    3. Route to forgot Password. `PUT /forgotPassword` Supply email
+    4. Route to reset Password. `PUT /resetPassword` Supply newPassword and resetLink
 
 ### book endpoint `api/v1/books/`
 - Both admin and user routes
-Route to get all books `GET /`
-Route to search books based on title, author or genre `GET /search?genre=sport`
+    1. Route to get all books `GET /`
+    2. Route to search books based on title, author or genre `GET /search?genre=sport`
 
 - Only admin routes
-Route to add a book `POST /addBook`
-Route to deletes book `DELETE /:bookId`
-Routes to edit book details `PUT /:bookId`
-Routes to get books by ID `GET /:bookId`
+    1. Route to add a book `POST /addBook`
+    2. Route to deletes book `DELETE /:bookId`
+    3. Routes to edit book details `PUT /:bookId`
+    4. Routes to get books by ID `GET /:bookId`
 
 ### borrow endpoint `api/v1/borrow`
 - Only users routes
-Route to borrow books. `POST /:bookId`
-Route to return books. PUT `/:bookId`
-Route to get borrowed history per user. `GET ?page=2&size=10`
+    1. Route to borrow books. `POST /:bookId`
+    2. Route to return books. PUT `/:bookId`
+    3. Route to get borrowed history per user. `GET ?page=2&size=10`
 
 - Only admin routes
-Route to get users borrowed history. `GET /:userId?page=2&size=10`
+    1. Route to get users borrowed history. `GET /:userId?page=2&size=10`
+    2. Route to get a single book record `GET /:bookId`
 
 ## Contributing
 Please read the **[Contribution instructions.](./CONTRIBUTING.md)**

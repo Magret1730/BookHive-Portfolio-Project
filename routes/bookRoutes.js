@@ -11,8 +11,8 @@ router.get('/search', authenticate, search); // GET http://localhost:8000/api/v1
 
 // Only admin routes
 router.post('/addBook', authenticate, adminCheck, addBook); // POST http://localhost:8000/api/v1/books/addBook Route to add a book
-router.delete('/:id', authenticate, adminCheck, deleteBook); // DELETE http://localhost:8000/api/v1/books/:id (id: bookId). Route to deletes book
-router.put('/:id', authenticate, adminCheck, editBook); // PUT http://localhost:8000/api/v1/books/:id (id: bookId). Routes to edit book details
-router.get('/:id', authenticate, adminCheck, BookById); // GET http://localhost:8000/api/v1/books/:id (id: bookId). Routes to get books by ID
+router.delete('/:bookId', authenticate, adminCheck, deleteBook); // DELETE http://localhost:8000/api/v1/books/:bookId Route to deletes book
+router.put('/:bookId', authenticate, adminCheck, editBook); // PUT http://localhost:8000/api/v1/books/:bookId Routes to edit book details
+router.get('/:bookId', authenticate, adminCheck, BookById); // GET http://localhost:8000/api/v1/books/:bookId Routes to get books by ID
 
 export default router;
