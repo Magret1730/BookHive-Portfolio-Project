@@ -1,4 +1,5 @@
 import Books from "../models/bookModel.js";
+import User from "../models/userModel.js";
 import BorrowedBooks from "../models/borrowedBook.js";
 
 // Method to borrow books
@@ -104,7 +105,7 @@ export const BorrowHistory = async (req, res) => {
       where: { userId },
       limit: size,
       offset,
-      order: [['createdAt', 'DESC']], // Optional: order by creation date
+      order: [['createdAt', 'DESC']], // Order by creation date 
     });
 
     if (count === 0) {
@@ -161,5 +162,59 @@ export const getUserBorrowHistory = async (req, res) => {
     });
   } catch (error) {
     return res.status(500).json({ error: `Error getting borrowed book history: ${error.message}` });
+  }
+};
+
+// Method to fetch a single book borrowed record
+export const getBorrowedBookDetails = async (req, res) => {
+  const { bookId } = req.params;
+  if (!bookId) {
+    return res.status(404).json({ error: 'User not found.' });
+  }
+
+  // Get page and size from query params, with defaults
+  const page = parseInt(req.query.page) || 1; // Default to page 1
+  const size = parseInt(req.query.size) || 5; // Default to 5 items per page
+  const offset = (page - 1) * size;
+
+  try {
+    const { count, rows: borrowedBook } = await BorrowedBooks.findAndCountAll({
+      where: { bookId },
+      limit: size,
+      offset,
+      order: [['createdAt', 'DESC']], // Order by creation date
+      include: [
+        {
+          model: Books,
+          attributes: ['title', 'author', 'genre'], // Attributes to include from Books
+        },
+        {
+          model: User,
+          attributes: ['firstName', 'email', 'id'], // Attributes to include from User
+        },
+      ],
+    });
+
+    if (count === 0) {
+      return res.status(404).json({ error: 'No borrowed book history found for this user.' });
+    }
+
+    // Calculate total pages
+    const totalPages = Math.ceil(count / size);
+
+    if (!borrowedBook) {
+      return res.status(404).json({ error: 'Borrowed book record not found' });
+    }
+
+    // return res.status(200).json(borrowedBook);
+    return res.status(200).json({
+      message: `Borrowed books history retrieved successfully for user with ID ${bookId}.`,
+      borrowedBook,
+      totalPages,
+      currentPage: page,
+    });
+  } catch (error) {
+    console.log(`Error Fetching Borrowed Book Details: ${error.message}`);
+    return res.status(500).json({ error: `Error Fetching Borrowed Book Details: ${error.message}` });
   }
 };
