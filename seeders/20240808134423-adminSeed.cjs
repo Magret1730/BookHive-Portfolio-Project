@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const jsonwebtoken = require('jsonwebtoken');
 require('dotenv').config();
+import { User } from '../models/userModel';
 
 'use strict';
 
@@ -8,6 +9,14 @@ require('dotenv').config();
 module.exports = {
   async up(queryInterface, Sequelize) {
     try {
+      const adminEmail = 'taskifyhubproject@gmail.com';
+      const existingAdmin = await User.findOne({ where: { email: adminEmail } });
+
+      if (existingAdmin) {
+        console.log('Admin user already exists. Skipping seeder...');
+        return; // Admin already exists, no need to create again
+      }
+
       const password = process.env.ADMINPASSWORD;
       if (!password) throw new Error('ADMINPASSWORD is not set');
       

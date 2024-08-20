@@ -1,4 +1,5 @@
 import Books from "../models/bookModel.js";
+import BorrowedBooks from "../models/borrowedBook.js";
 import { Op } from 'sequelize';
 
 const genreTypes = ['Education', 'Religion', 'Kids', 'Family', 'Health', 'Politics',
@@ -193,10 +194,15 @@ export const deleteBook = async (req, res) => {
       return res.status(400).json({ error: 'Book ID is required' });
     }
 
-    const book = await Books.findByPk(bookId);
+    const book = await Books.findByPk(bookId, { include: BorrowedBooks });
     if (!book) {
       return res.status(404).json({ error: 'Book not found' });
     }
+
+    if (book.BorrowedBooks.length > 0) {
+      return res.status(400).json({ error: 'Cannot delete book that is currently borrowed' });
+    }
+  
     // console.log(book);
     await Books.destroy({ where: { id: bookId } });
 
