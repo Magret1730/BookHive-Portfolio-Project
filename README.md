@@ -45,7 +45,7 @@ This is a backend library interface built using Node.js, Express, Sequelize, and
 - Configure **[environment](./.env.md)** variables.
 - Start the application: `npm start`
 
-The application will be accessible on `http://localhost:8000`
+The application will be accessible on `http://<host>:<port>`
 
 ## API Endpoints
 

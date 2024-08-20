@@ -194,7 +194,17 @@ export const deleteBook = async (req, res) => {
       return res.status(400).json({ error: 'Book ID is required' });
     }
 
-    const book = await Books.findByPk(bookId, { include: BorrowedBooks });
+    // Fetch the book along with related borrowed records
+    // const book = await Books.findByPk(bookId, { include: BorrowedBooks });
+    const book = await Books.findByPk(bookId, {
+      include: {
+        model: BorrowedBooks,
+        where: {
+          returnDate: null // Only include records where the book has not been returned
+        },
+        required: false // This allows the book to be returned even if there are no borrow records
+      }
+    });
     if (!book) {
       return res.status(404).json({ error: 'Book not found' });
     }
@@ -204,6 +214,7 @@ export const deleteBook = async (req, res) => {
     }
   
     // console.log(book);
+    // Delete book
     await Books.destroy({ where: { id: bookId } });
 
     return res.status(200).json({ message: `Book with ID ${bookId} and title (${book.title}) and author (${book.author}) was successfully deleted.` });
