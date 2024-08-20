@@ -198,7 +198,7 @@ export const deleteBook = async (req, res) => {
       return res.status(404).json({ error: 'Book not found' });
     }
     // console.log(book);
-    await Books.destroy({ where: { bookId } });
+    await Books.destroy({ where: { id: bookId } });
 
     return res.status(200).json({ message: `Book with ID ${bookId} and title (${book.title}) and author (${book.author}) was successfully deleted.` });
   } catch (error) {
