@@ -28,6 +28,10 @@ app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/books', bookRoutes);
 app.use('/api/v1/borrow', borrowRoutes);
 
+app.get('/', (req, res) => {
+  res.send("Welcome to BookHive Application!!!");
+});
+
 // Synchronize the models with the database
 // db.syncDb()
 //   .then(() => {
